@@ -46,8 +46,13 @@ class GitHubUploader(QWidget):
         self.set_remote_btn.clicked.connect(self.set_remote)
         self.set_remote_btn.setEnabled(False)
 
+        # Pull Button
+        self.pull_btn = QPushButton('Değişiklikleri Çek (Pull)', self)
+        self.pull_btn.clicked.connect(self.pull_from_github)
+        self.pull_btn.setEnabled(False)
+
         # Upload Button
-        self.upload_btn = QPushButton('GitHub\'a Yükle', self)
+        self.upload_btn = QPushButton('GitHub\'a Yükle (Push)', self)
         self.upload_btn.clicked.connect(self.upload_to_github)
         self.upload_btn.setEnabled(False)
 
@@ -59,6 +64,7 @@ class GitHubUploader(QWidget):
         main_layout.addWidget(self.remote_label)
         main_layout.addWidget(self.remote_input)
         main_layout.addWidget(self.set_remote_btn)
+        main_layout.addWidget(self.pull_btn)
         main_layout.addWidget(self.upload_btn)
         main_layout.addWidget(self.text_edit)
 
@@ -80,7 +86,6 @@ class GitHubUploader(QWidget):
             result = subprocess.run(['pipreqs', self.repo_path, '--force'], capture_output=True, text=True)
             if result.returncode == 0:
                 self.text_edit.append(f'requirements.txt oluşturuldu: {req_path}')
-                self.upload_btn.setEnabled(True)
             else:
                 self.text_edit.append(f'requirements.txt oluşturulurken hata: {result.stderr}')
         else:
@@ -104,11 +109,24 @@ class GitHubUploader(QWidget):
                     repo.delete_remote('origin')
                 repo.create_remote('origin', remote_url)
                 self.text_edit.append(f'Remote URL eklendi: {remote_url}')
+                self.pull_btn.setEnabled(True)
                 self.upload_btn.setEnabled(True)
             except Exception as e:
                 self.text_edit.append(f'Remote URL eklenirken hata: {str(e)}')
         else:
             self.text_edit.append('Klasör veya URL girilmedi!')
+
+    def pull_from_github(self):
+        if self.repo_path:
+            try:
+                repo = git.Repo(self.repo_path)
+                origin = repo.remotes.origin
+                origin.pull()
+                self.text_edit.append('GitHub\'dan başarıyla çekildi (Pull).')
+            except Exception as e:
+                self.text_edit.append(f'GitHub\'dan çekilirken hata (Pull): {str(e)}')
+        else:
+            self.text_edit.append('Klasör seçilmedi!')
 
     def upload_to_github(self):
         if self.repo_path:
@@ -118,10 +136,10 @@ class GitHubUploader(QWidget):
                 repo.index.commit('Initial commit')
                 origin = repo.remotes.origin
                 origin.push(repo.head.ref)
-                self.text_edit.append('GitHub\'a başarıyla yüklendi!')
+                self.text_edit.append('GitHub\'a başarıyla yüklendi (Push)!')
                 webbrowser.open(self.remote_input.text())
             except Exception as e:
-                self.text_edit.append(f'GitHub\'a yüklenirken hata: {str(e)}')
+                self.text_edit.append(f'GitHub\'a yüklenirken hata (Push): {str(e)}')
         else:
             self.text_edit.append('Klasör seçilmedi!')
 
