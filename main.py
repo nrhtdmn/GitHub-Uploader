@@ -41,6 +41,10 @@ class GitHubUploader(QWidget):
         self.remote_label = QLabel('GitHub Remote URL:')
         self.remote_input = QLineEdit(self)
 
+        # Commit Message Input
+        self.commit_label = QLabel('Commit Mesajı:')
+        self.commit_input = QLineEdit(self)
+
         # Set Remote Button
         self.set_remote_btn = QPushButton('Remote URL Ekle', self)
         self.set_remote_btn.clicked.connect(self.set_remote)
@@ -63,6 +67,8 @@ class GitHubUploader(QWidget):
         main_layout.addWidget(self.python_version_btn)
         main_layout.addWidget(self.remote_label)
         main_layout.addWidget(self.remote_input)
+        main_layout.addWidget(self.commit_label)
+        main_layout.addWidget(self.commit_input)
         main_layout.addWidget(self.set_remote_btn)
         main_layout.addWidget(self.pull_btn)
         main_layout.addWidget(self.upload_btn)
@@ -131,11 +137,15 @@ class GitHubUploader(QWidget):
     def upload_to_github(self):
         if self.repo_path:
             try:
+                commit_message = self.commit_input.text()
+                if not commit_message:
+                    commit_message = 'Initial commit'
+                
                 repo = git.Repo(self.repo_path)
                 repo.git.add(all=True)
-                repo.index.commit('Initial commit')
+                repo.index.commit(commit_message)
                 origin = repo.remotes.origin
-                origin.push(repo.head.ref)
+                origin.push('HEAD:main')  # Explicitly push to the main branch
                 self.text_edit.append('GitHub\'a başarıyla yüklendi (Push)!')
                 webbrowser.open(self.remote_input.text())
             except Exception as e:
