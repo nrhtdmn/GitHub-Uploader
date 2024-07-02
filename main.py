@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QTextEdit, QLineEdit, QLabel, QMessageBox)
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QTextEdit, QLineEdit, QLabel)
 from PyQt5.QtCore import Qt
 import git
 import subprocess
@@ -127,7 +127,7 @@ class GitHubUploader(QWidget):
             try:
                 repo = git.Repo(self.repo_path)
                 origin = repo.remotes.origin
-                origin.pull()
+                origin.pull('main')
                 self.text_edit.append('GitHub\'dan başarıyla çekildi (Pull).')
             except Exception as e:
                 self.text_edit.append(f'GitHub\'dan çekilirken hata (Pull): {str(e)}')
@@ -142,10 +142,12 @@ class GitHubUploader(QWidget):
                     commit_message = 'Initial commit'
                 
                 repo = git.Repo(self.repo_path)
+                if 'main' not in repo.heads:
+                    repo.git.checkout('-b', 'main')
                 repo.git.add(all=True)
                 repo.index.commit(commit_message)
                 origin = repo.remotes.origin
-                origin.push('HEAD:main')  # Explicitly push to the main branch
+                origin.push(refspec='main:main')
                 self.text_edit.append('GitHub\'a başarıyla yüklendi (Push)!')
                 webbrowser.open(self.remote_input.text())
             except Exception as e:
